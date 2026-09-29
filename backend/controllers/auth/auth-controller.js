@@ -90,39 +90,54 @@ const registerUser = async(req,res)=>{
 // }
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password;
+
+  console.log("========== LOGIN ==========");
+  console.log("Email received:", email);
+  console.log("Password received:", !!password);
+  console.log("Password length:", password?.length);
 
   try {
     const existingUser = await User.findOne({
       where: { email }
     });
 
-    console.log("LOGIN DEBUG:", {
-      email,
-      userFound: !!existingUser,
-    });
+    console.log("User found:", !!existingUser);
 
     if (!existingUser) {
+      console.log("❌ USER NOT FOUND");
+
       return res.status(401).json({
         success: false,
         message: "Invalid email or password."
       });
     }
+
+    console.log("User ID:", existingUser.id);
+    console.log("User email:", existingUser.email);
+    console.log("Hash exists:", !!existingUser.password);
+    console.log("Hash length:", existingUser.password?.length);
+    console.log("Hash prefix:", existingUser.password?.substring(0, 4));
 
     const passwordMatch = await existingUser.comparePassword(password);
 
-    console.log("PASSWORD DEBUG:", {
-      passwordMatch,
-    });
+    console.log("Password match:", passwordMatch);
 
     if (!passwordMatch) {
+      console.log("❌ PASSWORD DOES NOT MATCH");
+
       return res.status(401).json({
         success: false,
         message: "Invalid email or password."
       });
     }
 
+    console.log("✅ PASSWORD MATCHED");
+
     const token = generateAccessToken(existingUser);
+
+    console.log("✅ JWT CREATED");
 
     res.cookie(COOKIE_NAME, token, cookieOptions);
 
@@ -138,7 +153,7 @@ const loginUser = async (req, res) => {
     });
 
   } catch (e) {
-    console.error("LOGIN ERROR:", e);
+    console.error("❌ LOGIN ERROR:", e);
 
     return res.status(500).json({
       success: false,
