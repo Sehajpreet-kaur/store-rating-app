@@ -50,44 +50,102 @@ const registerUser = async(req,res)=>{
     }
 }
 
-const loginUser= async(req,res)=>{
-    const {email, password}=req.body;
+// const loginUser= async(req,res)=>{
+//     const {email, password}=req.body;
 
-    try{
-        const existingUser= await User.findOne({where :{ email}})
-        if(!existingUser){
-            return res.status(401).json({
-                success:false, message: "Invalid email or password."
-            })
-        }
+//     try{
+//         const existingUser= await User.findOne({where :{ email}})
+//         if(!existingUser){
+//             return res.status(401).json({
+//                 success:false, message: "Invalid email or password."
+//             })
+//         }
 
-        const passwordMatch= await existingUser.comparePassword(password)
-        if(!passwordMatch){
-            return res.status(401).json({
-                success:false, message: "Invalid email or password."
-            })
-        }
+//         const passwordMatch= await existingUser.comparePassword(password)
+//         if(!passwordMatch){
+//             return res.status(401).json({
+//                 success:false, message: "Invalid email or password."
+//             })
+//         }
 
-        const token= generateAccessToken(existingUser)
+//         const token= generateAccessToken(existingUser)
 
-        res.cookie(COOKIE_NAME, token, cookieOptions)
+//         res.cookie(COOKIE_NAME, token, cookieOptions)
 
-        return res.status(200).json({
-            success:true, message: "Login successful!",
-            user:({
-                id:existingUser.id,
-                name:existingUser.name,
-                email:existingUser.email,
-                role:existingUser.role
-            })
-        })
-    }catch(e){
-        console.log("error",e)
-        return res.status(500).json({
-            success:false, message:"Some error occured."
-        })
+//         return res.status(200).json({
+//             success:true, message: "Login successful!",
+//             user:({
+//                 id:existingUser.id,
+//                 name:existingUser.name,
+//                 email:existingUser.email,
+//                 role:existingUser.role
+//             })
+//         })
+//     }catch(e){
+//         console.log("error",e)
+//         return res.status(500).json({
+//             success:false, message:"Some error occured."
+//         })
+//     }
+// }
+
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const existingUser = await User.findOne({
+      where: { email }
+    });
+
+    console.log("LOGIN DEBUG:", {
+      email,
+      userFound: !!existingUser,
+    });
+
+    if (!existingUser) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password."
+      });
     }
-}
+
+    const passwordMatch = await existingUser.comparePassword(password);
+
+    console.log("PASSWORD DEBUG:", {
+      passwordMatch,
+    });
+
+    if (!passwordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password."
+      });
+    }
+
+    const token = generateAccessToken(existingUser);
+
+    res.cookie(COOKIE_NAME, token, cookieOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful!",
+      user: {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        role: existingUser.role
+      }
+    });
+
+  } catch (e) {
+    console.error("LOGIN ERROR:", e);
+
+    return res.status(500).json({
+      success: false,
+      message: "Some error occurred."
+    });
+  }
+};
 
 // PUT /api/auth/password  { oldPassword, newPassword }  (any logged-in role)
 const updatePassword = async (req, res) => {
